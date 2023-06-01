@@ -1,16 +1,23 @@
+import cv2 as cv2
+import numpy as np
 import serial
 import streamlit as st
 import plotly.graph_objects as go
 import time
+import tempfile
 
-arduino = serial.Serial(port='COM7', baudrate=9600, parity=serial.PARITY_NONE,stopbits=serial.STOPBITS_ONE,bytesize=serial.EIGHTBITS) #Change COM3 to whichever COM port your arduino is in
+
+
+arduino = serial.Serial(port='COM9', baudrate=9600, parity=serial.PARITY_NONE,stopbits=serial.STOPBITS_ONE,bytesize=serial.EIGHTBITS) #Change COM3 to whichever COM port your arduino is in
 
 st.sidebar.title('Back Cam')
 info_bar = st.empty()
 info_1 = st.empty()
 info_2 = st.empty()
 radar_placeholder = st.empty()
-# Adds
+frame_placeholder=st.empty()
+
+
 r = [0]*180
 
 theta = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34,
@@ -25,6 +32,24 @@ theta = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34,
 290, 292, 294, 296, 298, 300, 302, 304, 306, 308, 310, 312, 314, 316, 318,
 320, 322, 324, 326, 328, 330, 332, 334, 336, 338, 340, 342, 344, 346, 348,
 350, 352, 354, 356, 358]
+
+def cam_open():
+    # Use this line to capture video from the webcam
+    cap = cv2.VideoCapture(0)
+    # Set the title for the Streamlit app
+    st.title("Video Capture with OpenCV")
+    frame_placeholder = st.empty()
+    while cap.isOpened():
+        ret, frame = cap.read()
+        # Convert the frame from BGR to RGB format
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        # Display the frame using Streamlit's st.image
+        frame_placeholder.image(frame, channels="RGB")
+        # Break the loop if the 'q' key is pressed or the user clicks the "Stop" button
+        if cv2.waitKey(1) & 0xFF == ord("q"):
+            break
+    cap.release()
+    cv2.destroyAllWindows()
 
 def radar_gauge(val,pos,placeholder):
     fig = go.Figure()
@@ -59,6 +84,7 @@ if st.sidebar.button('Start cam'):
 
     try:
         arduino.open()
+
     except:
         pass
 
@@ -73,17 +99,22 @@ if st.sidebar.button('Start cam'):
         arduino.flushInput()
         arduino.flushOutput()
         arduino.flush()
+
+
         try:
             val = arduino.readline().decode().strip('\r\n').split('*')[1]
         except:
             val = 0
+
         pos = arduino.readline().decode().strip('\r\n').split('*')[0]
         info_1.info(('Range (mm) = **%s**' % (val)))
         info_2.info(('Position (°) = **%s**' % (pos)))
-        radar_gauge(val,pos,radar_placeholder)
+        radar_gauge(val, pos, radar_placeholder)
         time.sleep(0.05)
+        cam_open()
 
-info_bar.warning('Cam stopped')
+
+    info_bar.warning('Cam stopped')
 
 try:
     arduino.close()
