@@ -5,11 +5,7 @@ import streamlit as st
 import plotly.graph_objects as go
 import time
 import tempfile
-
-
-
 arduino = serial.Serial(port='COM9', baudrate=9600, parity=serial.PARITY_NONE,stopbits=serial.STOPBITS_ONE,bytesize=serial.EIGHTBITS) #Change COM3 to whichever COM port your arduino is in
-
 st.sidebar.title('Back Cam')
 info_bar = st.empty()
 info_1 = st.empty()
